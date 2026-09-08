@@ -14,6 +14,17 @@ commands:
           command: |
             env | grep -E 'COMPILATION_CACHE|SWIFT_ENABLE' || echo "no cache env vars set"
 
+  check_cache_socket:
+    steps:
+      - run:
+          name: Check cache server socket + process
+          command: |
+            sock="${COMPILATION_CACHE_REMOTE_SERVICE_PATH#unix://}"
+            echo "Expected socket: $sock"
+            ls -la "$(dirname "$sock")" || echo "cannot list socket dir"
+            echo "---"
+            ps aux | grep -i circleci-cache | grep -v grep || echo "no circleci-cache process found"
+
   timed_build:
     parameters:
       step_name:
@@ -41,6 +52,7 @@ jobs:
           tool: xcode
           steps:
             - check_cache_env
+            - check_cache_socket
             - run:
                 name: Cold build
                 command: |
@@ -72,6 +84,7 @@ jobs:
           tool: xcode
           steps:
             - check_cache_env
+            - check_cache_socket
             - run:
                 name: Seed build
                 command: |
@@ -128,6 +141,7 @@ jobs:
                 tool: xcode
                 steps:
                   - check_cache_env
+                  - check_cache_socket
                   - timed_build:
                       step_name: xcodebuild build
                       command: |
