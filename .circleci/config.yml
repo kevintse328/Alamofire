@@ -27,6 +27,9 @@ jobs:
     executor: xcode
     steps:
       - checkout
+      - run:
+          name: List schemes (sanity check)
+          command: xcodebuild -list -project Alamofire.xcodeproj
       - with_tool_cache:
           tool: xcode
           steps:
@@ -34,13 +37,15 @@ jobs:
                 name: Cold build
                 command: |
                   xcodebuild build \
-                    -scheme Alamofire \
+                    -project Alamofire.xcodeproj \
+                    -scheme "Alamofire iOS" \
                     -destination 'generic/platform=iOS Simulator'
             - run:
                 name: Rebuild (expect cache hits)
                 command: |
                   xcodebuild build \
-                    -scheme Alamofire \
+                    -project Alamofire.xcodeproj \
+                    -scheme "Alamofire iOS" \
                     -destination 'generic/platform=iOS Simulator'
 
   seed-xcode:
@@ -54,7 +59,8 @@ jobs:
                 name: Seed build
                 command: |
                   xcodebuild build \
-                    -scheme Alamofire \
+                    -project Alamofire.xcodeproj \
+                    -scheme "Alamofire iOS" \
                     -destination 'generic/platform=iOS Simulator'
       - save_cache:
           key: xcode-bench-{{ .Environment.CIRCLE_BUILD_NUM }}
@@ -104,7 +110,8 @@ jobs:
                       step_name: xcodebuild build
                       command: |
                         xcodebuild build \
-                          -scheme Alamofire \
+                          -project Alamofire.xcodeproj \
+                          -scheme "Alamofire iOS" \
                           -destination 'generic/platform=iOS Simulator'
       - unless:
           condition: << parameters.use_cache_subcommand >>
@@ -113,7 +120,8 @@ jobs:
                 step_name: xcodebuild build
                 command: |
                   xcodebuild build \
-                    -scheme Alamofire \
+                    -project Alamofire.xcodeproj \
+                    -scheme "Alamofire iOS" \
                     -destination 'generic/platform=iOS Simulator'
       - run:
           name: Record result
