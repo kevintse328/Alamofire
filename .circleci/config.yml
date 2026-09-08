@@ -90,11 +90,7 @@ jobs:
                   xcodebuild build \
                     -project Alamofire.xcodeproj \
                     -scheme "Alamofire iOS" \
-                    -destination 'generic/platform=iOS Simulator' \
-                    COMPILATION_CACHE_ENABLE_CACHING="${COMPILATION_CACHE_ENABLE_CACHING:-}" \
-                    SWIFT_ENABLE_COMPILE_CACHE="${SWIFT_ENABLE_COMPILE_CACHE:-}" \
-                    COMPILATION_CACHE_ENABLE_PLUGIN="${COMPILATION_CACHE_ENABLE_PLUGIN:-}" \
-                    COMPILATION_CACHE_REMOTE_SERVICE_PATH="${COMPILATION_CACHE_REMOTE_SERVICE_PATH:-}"
+                    -destination 'generic/platform=iOS Simulator'
             - check_sandbox_denials
             - run:
                 name: Rebuild (expect cache hits)
@@ -102,11 +98,7 @@ jobs:
                   xcodebuild build \
                     -project Alamofire.xcodeproj \
                     -scheme "Alamofire iOS" \
-                    -destination 'generic/platform=iOS Simulator' \
-                    COMPILATION_CACHE_ENABLE_CACHING="${COMPILATION_CACHE_ENABLE_CACHING:-}" \
-                    SWIFT_ENABLE_COMPILE_CACHE="${SWIFT_ENABLE_COMPILE_CACHE:-}" \
-                    COMPILATION_CACHE_ENABLE_PLUGIN="${COMPILATION_CACHE_ENABLE_PLUGIN:-}" \
-                    COMPILATION_CACHE_REMOTE_SERVICE_PATH="${COMPILATION_CACHE_REMOTE_SERVICE_PATH:-}"
+                    -destination 'generic/platform=iOS Simulator'
 
   seed-xcode:
     executor: xcode
@@ -123,11 +115,7 @@ jobs:
                   xcodebuild build \
                     -project Alamofire.xcodeproj \
                     -scheme "Alamofire iOS" \
-                    -destination 'generic/platform=iOS Simulator' \
-                    COMPILATION_CACHE_ENABLE_CACHING="${COMPILATION_CACHE_ENABLE_CACHING:-}" \
-                    SWIFT_ENABLE_COMPILE_CACHE="${SWIFT_ENABLE_COMPILE_CACHE:-}" \
-                    COMPILATION_CACHE_ENABLE_PLUGIN="${COMPILATION_CACHE_ENABLE_PLUGIN:-}" \
-                    COMPILATION_CACHE_REMOTE_SERVICE_PATH="${COMPILATION_CACHE_REMOTE_SERVICE_PATH:-}"
+                    -destination 'generic/platform=iOS Simulator'
       - save_cache:
           key: xcode-bench-{{ .Environment.CIRCLE_BUILD_NUM }}
           paths:
@@ -180,11 +168,7 @@ jobs:
                         xcodebuild build \
                           -project Alamofire.xcodeproj \
                           -scheme "Alamofire iOS" \
-                          -destination 'generic/platform=iOS Simulator' \
-                          COMPILATION_CACHE_ENABLE_CACHING="${COMPILATION_CACHE_ENABLE_CACHING:-}" \
-                          SWIFT_ENABLE_COMPILE_CACHE="${SWIFT_ENABLE_COMPILE_CACHE:-}" \
-                          COMPILATION_CACHE_ENABLE_PLUGIN="${COMPILATION_CACHE_ENABLE_PLUGIN:-}" \
-                          COMPILATION_CACHE_REMOTE_SERVICE_PATH="${COMPILATION_CACHE_REMOTE_SERVICE_PATH:-}"
+                          -destination 'generic/platform=iOS Simulator'
       - unless:
           condition: << parameters.use_cache_subcommand >>
           steps:
