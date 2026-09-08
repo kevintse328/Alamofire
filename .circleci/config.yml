@@ -1,0 +1,160 @@
+version: 2.1
+
+executors:
+  xcode:
+    macos:
+      xcode: "26.4.0"
+    resource_class: m4pro.medium
+
+commands:
+  timed_build:
+    parameters:
+      step_name:
+        type: string
+      command:
+        type: string
+    steps:
+      - run:
+          name: << parameters.step_name >>
+          command: |
+            start=$(date +%s%N)
+            << parameters.command >>
+            end=$(date +%s%N)
+            echo "export BUILD_NS=$((end - start))" >> "$BASH_ENV"
+
+jobs:
+  smoke-test-xcode-cache:
+    executor: xcode
+    steps:
+      - checkout
+      - with_tool_cache:
+          tool: xcode
+          steps:
+            - run:
+                name: Cold build
+                command: |
+                  xcodebuild build \
+                    -scheme Alamofire \
+                    -destination 'generic/platform=iOS Simulator'
+            - run:
+                name: Rebuild (expect cache hits)
+                command: |
+                  xcodebuild build \
+                    -scheme Alamofire \
+                    -destination 'generic/platform=iOS Simulator'
+
+  seed-xcode:
+    executor: xcode
+    steps:
+      - checkout
+      - with_tool_cache:
+          tool: xcode
+          steps:
+            - run:
+                name: Seed build
+                command: |
+                  xcodebuild build \
+                    -scheme Alamofire \
+                    -destination 'generic/platform=iOS Simulator'
+      - save_cache:
+          key: xcode-bench-{{ .Environment.CIRCLE_BUILD_NUM }}
+          paths:
+            # TODO: still need to confirm what with_tool_cache actually
+            # populates for Xcode — this is a guess
+            - ~/Library/Developer/Xcode/DerivedData
+            - ~/Library/Caches/org.llvm.clang
+
+  benchmark-xcode:
+    executor: xcode
+    parameters:
+      use_cache_subcommand:
+        type: boolean
+      use_circleci_cache:
+        type: boolean
+        default: false
+    steps:
+      - checkout
+      - unless:
+          condition: << parameters.use_cache_subcommand >>
+          steps:
+            - when:
+                condition: << parameters.use_circleci_cache >>
+                steps:
+                  - restore_cache:
+                      keys:
+                        - xcode-bench-
+            - unless:
+                condition: << parameters.use_circleci_cache >>
+                steps:
+                  - run:
+                      name: Clean DerivedData (no-cache baseline)
+                      command: rm -rf ~/Library/Developer/Xcode/DerivedData
+      - run:
+          name: Record variant name
+          command: |
+            variant="<<# parameters.use_cache_subcommand >>cache-server<</ parameters.use_cache_subcommand >><<^ parameters.use_cache_subcommand >><<# parameters.use_circleci_cache >>circleci-cache<</ parameters.use_circleci_cache >><<^ parameters.use_circleci_cache >>no-cache<</ parameters.use_circleci_cache >><</ parameters.use_cache_subcommand >>"
+            echo "export BENCH_VARIANT=$variant" >> "$BASH_ENV"
+      - when:
+          condition: << parameters.use_cache_subcommand >>
+          steps:
+            - with_tool_cache:
+                tool: xcode
+                steps:
+                  - timed_build:
+                      step_name: xcodebuild build
+                      command: |
+                        xcodebuild build \
+                          -scheme Alamofire \
+                          -destination 'generic/platform=iOS Simulator'
+      - unless:
+          condition: << parameters.use_cache_subcommand >>
+          steps:
+            - timed_build:
+                step_name: xcodebuild build
+                command: |
+                  xcodebuild build \
+                    -scheme Alamofire \
+                    -destination 'generic/platform=iOS Simulator'
+      - run:
+          name: Record result
+          when: always
+          command: |
+            mkdir -p /tmp/bench-results/xcode
+            if [ -n "${BUILD_NS:-}" ]; then
+              echo $((BUILD_NS / 1000000)) > /tmp/bench-results/xcode/$BENCH_VARIANT
+            else
+              echo FAILED > /tmp/bench-results/xcode/$BENCH_VARIANT
+            fi
+      - persist_to_workspace:
+          when: always
+          root: /tmp
+          paths:
+            - bench-results
+
+workflows:
+  xcode-cache-check:
+    jobs:
+      - smoke-test-xcode-cache
+      - approve-benchmarks:
+          type: approval
+      - seed-xcode:
+          requires:
+            - approve-benchmarks
+      - benchmark-xcode:
+          name: Xcode - No caching
+          use_cache_subcommand: false
+          use_circleci_cache: false
+          requires:
+            - seed-xcode
+      - benchmark-xcode:
+          name: Xcode - Cache server
+          use_cache_subcommand: true
+          use_circleci_cache: false
+          requires:
+            - seed-xcode
+      - benchmark-xcode:
+          name: Xcode - CircleCI cache
+          use_cache_subcommand: false
+          use_circleci_cache: true
+          requires:
+            - seed-xcode
