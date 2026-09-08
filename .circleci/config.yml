@@ -46,6 +46,16 @@ commands:
                 print(f'socket connect (python): FAILED ({e})')
             "
 
+  check_sandbox_denials:
+    steps:
+      - run:
+          name: Check for sandbox denials
+          command: |
+            sudo log show --last 3m \
+              --predicate 'eventMessage contains "deny" and (eventMessage contains "connect" or eventMessage contains "unix" or eventMessage contains ".sock")' \
+              --style compact \
+              || echo "log show failed or found nothing"
+
   timed_build:
     parameters:
       step_name:
@@ -85,6 +95,7 @@ jobs:
                     SWIFT_ENABLE_COMPILE_CACHE="${SWIFT_ENABLE_COMPILE_CACHE:-}" \
                     COMPILATION_CACHE_ENABLE_PLUGIN="${COMPILATION_CACHE_ENABLE_PLUGIN:-}" \
                     COMPILATION_CACHE_REMOTE_SERVICE_PATH="${COMPILATION_CACHE_REMOTE_SERVICE_PATH:-}"
+            - check_sandbox_denials
             - run:
                 name: Rebuild (expect cache hits)
                 command: |
