@@ -32,7 +32,10 @@ commands:
                 echo "socket connect (nc): FAILED (exit $?)"
               fi
             else
-              python3 -c "
+              echo "socket connect (nc): nc not available, skipped"
+            fi
+            echo "---"
+            python3 -c "
             import socket
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             try:
@@ -42,7 +45,6 @@ commands:
             except Exception as e:
                 print(f'socket connect (python): FAILED ({e})')
             "
-            fi
 
   timed_build:
     parameters:
