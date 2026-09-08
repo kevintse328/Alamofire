@@ -23,7 +23,26 @@ commands:
             echo "Expected socket: $sock"
             ls -la "$(dirname "$sock")" || echo "cannot list socket dir"
             echo "---"
-            ps aux | grep -i circleci-cache | grep -v grep || echo "no circleci-cache process found"
+            ps aux | grep -E 'cache server|circleci run cache' | grep -v grep || echo "no cache-server process found"
+            echo "---"
+            if command -v nc >/dev/null 2>&1; then
+              if nc -z -U "$sock" 2>&1; then
+                echo "socket connect (nc): SUCCESS"
+              else
+                echo "socket connect (nc): FAILED (exit $?)"
+              fi
+            else
+              python3 -c "
+            import socket
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            try:
+                s.settimeout(3)
+                s.connect('$sock')
+                print('socket connect (python): SUCCESS')
+            except Exception as e:
+                print(f'socket connect (python): FAILED ({e})')
+            "
+            fi
 
   timed_build:
     parameters:
