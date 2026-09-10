@@ -139,10 +139,20 @@ jobs:
             - run:
                 name: Seed build
                 command: |
+                  sock="${COMPILATION_CACHE_REMOTE_SERVICE_PATH#unix://}"
                   xcodebuild build \
                     -project Alamofire.xcodeproj \
                     -scheme "Alamofire iOS" \
-                    -destination 'generic/platform=iOS Simulator'
+                    -destination 'generic/platform=iOS Simulator' \
+                    COMPILATION_CACHE_REMOTE_SERVICE_PATH="$sock" \
+                    COMPILATION_CACHE_ENABLE_PLUGIN=YES \
+                    SWIFT_ENABLE_COMPILE_CACHE=YES \
+                    CLANG_ENABLE_COMPILE_CACHE=YES \
+                    SWIFT_ENABLE_EXPLICIT_MODULES=YES \
+                    SWIFT_USE_INTEGRATED_DRIVER=YES \
+                    CLANG_ENABLE_MODULES=YES \
+                    COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES=YES \
+                    COMPILATION_CACHE_ENABLE_DETACHED_KEY_QUERIES=YES
       - save_cache:
           key: xcode-bench-{{ .Environment.CIRCLE_BUILD_NUM }}
           paths:
@@ -192,10 +202,20 @@ jobs:
                   - timed_build:
                       step_name: xcodebuild build
                       command: |
+                        sock="${COMPILATION_CACHE_REMOTE_SERVICE_PATH#unix://}"
                         xcodebuild build \
                           -project Alamofire.xcodeproj \
                           -scheme "Alamofire iOS" \
-                          -destination 'generic/platform=iOS Simulator'
+                          -destination 'generic/platform=iOS Simulator' \
+                          COMPILATION_CACHE_REMOTE_SERVICE_PATH="$sock" \
+                          COMPILATION_CACHE_ENABLE_PLUGIN=YES \
+                          SWIFT_ENABLE_COMPILE_CACHE=YES \
+                          CLANG_ENABLE_COMPILE_CACHE=YES \
+                          SWIFT_ENABLE_EXPLICIT_MODULES=YES \
+                          SWIFT_USE_INTEGRATED_DRIVER=YES \
+                          CLANG_ENABLE_MODULES=YES \
+                          COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES=YES \
+                          COMPILATION_CACHE_ENABLE_DETACHED_KEY_QUERIES=YES
       - unless:
           condition: << parameters.use_cache_subcommand >>
           steps:
