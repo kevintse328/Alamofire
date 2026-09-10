@@ -103,6 +103,13 @@ jobs:
                     COMPILATION_CACHE_ENABLE_DETACHED_KEY_QUERIES=YES
             - check_sandbox_denials
             - run:
+                name: Clear local intermediates (force real cache query)
+                command: |
+                  # Deliberately NOT touching CompilationCache.noindex - only the
+                  # local incremental-build state, so Xcode can't short-circuit
+                  # via its own up-to-date check and skip asking the remote cache.
+                  rm -rf ~/Library/Developer/Xcode/DerivedData/Alamofire-*/Build/Intermediates.noindex
+            - run:
                 name: Rebuild (expect cache hits)
                 command: |
                   sock="${COMPILATION_CACHE_REMOTE_SERVICE_PATH#unix://}"
